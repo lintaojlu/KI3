@@ -1,3 +1,4 @@
+import json
 import os
 
 import pandas as pd
@@ -6,7 +7,7 @@ import requests
 from mysql import MySQLDatabase
 
 
-def _search_with_coordinate(point, language='zh-CN', city_type='', filter_type='administrative_area_level_2|administrative_area_level_3|administrative_area_level_4'):
+def _search_with_coordinate(point, language='zh-CN', city_type='', filter_type='administrative_area_level_2|administrative_area_level_3|administrative_area_level_4', debug=False):
     # 设置API密钥和城市名称
     api_key = "AIzaSyD202Xzio1yOu5DpC1vV1VlHmOVrZU09nA"
     # 发送请求并获取响应
@@ -17,6 +18,8 @@ def _search_with_coordinate(point, language='zh-CN', city_type='', filter_type='
         # 解析响应并获取所需信息
         status = response['status']
         if status == 'OK':
+            if debug:
+                print(json.dumps(response, indent=4, ensure_ascii=False))
             # 先找出国家，再根据国家选择过滤方式
             for result in response['results']:
                 for component in result['address_components']:
@@ -67,6 +70,8 @@ def _search_with_coordinate(point, language='zh-CN', city_type='', filter_type='
                                 cn_regex = re.compile(r'^[\u4e00-\u9fff－\-]+$')
                                 if cn_regex.match(city):  # 结果不是中文就继续查找
                                     target_language_flag = True
+                                if language == 'en':
+                                    target_language_flag = True
                         if target_language_flag:
                             break
                     else:  # 对for循环到底的else判断
@@ -102,33 +107,33 @@ class LPTranslator:
 
         # city
         point = f'{self.latitude}, {self.longitude}'
-        self.city_cn, iso2, city_type_str = _search_with_coordinate(point, filter_type='administrative_area_level_2|administrative_area_level_3|administrative_area_level_4')
-        self.city_en, iso2_2, city_type_str2 = _search_with_coordinate(point, filter_type='administrative_area_level_2|administrative_area_level_3|administrative_area_level_4', language='en')
+        self.city_cn, iso2, city_type_str = _search_with_coordinate(point)
+        self.city_en, iso2_2, city_type_str2 = _search_with_coordinate(point, language='en')
         cn_regex = re.compile(r'^[\u4e00-\u9fff－\-]+$')
-        if not cn_regex.match(self.city_cn):
-            return False, 'city_cn is not in Chinese'
-        if city_type_str != city_type_str2:
-            return False, 'city_type_cn not equals to city_type_en'
+        if not cn_regex.match(self.city_cn) or city_type_str != city_type_str2:
+            self.note = f'city error: cn:[{self.city_cn}][{city_type_str}] en:[{self.city_en}][{city_type_str2}]'
+            return False, self.note
 
         # country
         # query for database
         # sql = 'SELECT short_name_cn, short_name_en FROM base_region WHERE region_2letter_code = "{}";'.format(iso2)
-        df_country = pd.read_csv('country_name_final.csv')
+        df_country = pd.read_csv('~/.submarine/country_name_final.csv')
+        df_country = df_country.fillna({'region_2letter_code': "NA"})
         if iso2 in df_country['region_2letter_code'].values:
-            resp = df_country[df_country['region_2letter_code'] == iso2][0]
+            resp = df_country[df_country['region_2letter_code'] == iso2].iloc[0]
             self.country_cn = resp['short_name_cn']
             self.country_en = resp['short_name_en']
         if self.country_en == '' or self.country_cn == '':
-            return False, 'not found country'
+            return False, f'country error:[{iso2}]'
 
         # city_type
         self.city_type = self.city_type_dict[city_type_str]
         if not isinstance(self.city_type, int):
-            return False, 'city_type error'
+            return False, f'city_type error:[{self.city_type}]'
 
         data = {'name': self.name, 'cls': self.cls, 'city_cn': self.city_cn, 'city_en': self.city_en, 'country_cn': self.country_cn, 'country_en': self.country_en, 'city_type': self.city_type, 'note': self.note, 'iso2': iso2}
         return True, data
 
 
-# print(_search_with_coordinate('45.357,36.4774'))
+# print(_search_with_coordinate('12.6996,-61.339', language='zh-CN', debug=True))
 

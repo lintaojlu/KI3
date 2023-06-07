@@ -1,4 +1,5 @@
 import datetime
+import time
 
 import pandas as pd
 import re
@@ -204,5 +205,27 @@ import shutil
 # path = "data/cable_data"
 #
 # process_commits(path)
+from submarine.landing_point_translator import LPTranslator
 
+df = pd.read_csv('test1.csv')
+df1 = df[df['city_en'].isnull()]
+print(df1)
+for i, row in tqdm(df1.iterrows(), total=len(df1)):
+    lp_translator = LPTranslator(lp_id=row['name'], name=row['name'], latitude=row['latitude'], longitude=row['longitude'])
+    succ, res = lp_translator.translate()
+    time.sleep(0.2)
+    if succ:
+        df1.loc[i, 'city_en'] = res['city_en']
+        df1.loc[i, 'note'] = res['note']
+    else:
+        if pd.isnull(row['note']):
+            df1.loc[i, 'note'] = res
+        else:
+            df1.loc[i, 'note'] = row['note'] + '|' + res
 
+merged_df = pd.merge(df, df1, how='left', on=['name','cls','latitude','longitude','city_cn','city_type','iso2','country_cn','country_en'])
+merged_df['city_en'] = merged_df['city_en_x'].fillna(merged_df['city_en_y'])
+merged_df['note'] = merged_df['note_y'].fillna(merged_df['note_x'])
+merged_df = merged_df.drop(columns=['city_en_x', 'city_en_y', 'note_x', 'note_y'])
+merged_df = merged_df.reindex(columns=['name','cls','latitude','longitude','city_cn','city_en','city_type','iso2','country_cn','country_en','note'])
+merged_df.to_csv('test2.csv', index=False)

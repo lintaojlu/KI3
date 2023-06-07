@@ -254,9 +254,9 @@ class LandingStations:
 # path_x_cn = path2.split('.')[0]+'_x_cn.csv'
 # path_empty = path2.split('.')[0]+'_empty.csv'
 # split_df(path2, verify_path=path_v, empty_path=path_empty, non_cn_path=path_x_cn)
-os.system('export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890')
-# print(_search_with_coordinate('45.357,36.4774', city_type='', filter_type='administrative_area_level_2|administrative_area_level_3|administrative_area_level_4', debug=True))
-station = LandingStations('~/.submarine/landing_station_trans.csv')
-station.data['city_en'] = ''
-station.create_country()
-station.save_to_csv('~/.submarine/landing_station_trans1.csv')
+# os.system('export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890')
+print(_search_with_coordinate('2.45235,100.313', city_type='', filter_type='administrative_area_level_2|administrative_area_level_3|administrative_area_level_4', debug=True))
+# station = LandingStations('~/.submarine/landing_station_trans.csv')
+# station.data['city_en'] = ''
+# station.create_country()
+# station.save_to_csv('~/.submarine/landing_station_trans1.csv')

@@ -617,7 +617,7 @@ class SubmarineUpdater:
                         sc_country = 'Taiwan'
                     elif sc_lp_id in MO_LPs:
                         sc_country = 'Macao'
-                    # self.db.single_insert('submarine_cable_landing_point_conn', ['{}_{}'.format(lp_id, sc_lp_id), lp_id, country, sc_lp_id, sc_country, cable_id], ['id', 'landing_point_id', 'country', 'straight_conn_lp_id', 'straight_conn_country', 'cable'])
+                    self.db.single_insert('submarine_cable_landing_point_conn', ['{}_{}'.format(lp_id, sc_lp_id), lp_id, country, sc_lp_id, sc_country, cable_id], ['id', 'landing_point_id', 'country', 'straight_conn_lp_id', 'straight_conn_country', 'cable'])
 
     def load_year_change(self):
         min_year = min(self.year.keys())
@@ -676,7 +676,7 @@ class SubmarineUpdater:
                 cable_length = self.owner_year[owner][year]['cable_length']
                 new_capacity = self.owner_year[owner][year]['new_capacity']
                 new_cable_ids = ','.join(self.owner_year[owner][year]['new_cable_ids'])
-                # self.db.single_insert('submarine_cable_yearslength', [owner, year, cable_num, cable_length, new_capacity, new_cable_ids], ['orgname', 'year', 'cable_num', 'cable_length', 'new_capacity', 'new_cable_ids'])
+                self.db.single_insert('submarine_cable_yearslength', [owner, year, cable_num, cable_length, new_capacity, new_cable_ids], ['orgname', 'year', 'cable_num', 'cable_length', 'new_capacity', 'new_cable_ids'])
 
     def update_cable_geo(self):
         log('Begin Dump to submarine_cable_geo')
@@ -727,8 +727,8 @@ class SubmarineUpdater:
         log('   SUBMAREIN_CABLE_LANDING_POINT_COORDINATES Done')
 
     def update(self):
-        # self.sync_cables()
-        # self.save_cables()
+        self.sync_cables()
+        self.save_cables()
         os.chdir(self.BASIC_DIR)
 
         self.update_cable_geo()
